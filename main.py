@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+import traceback
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 from typing import List
@@ -113,42 +114,49 @@ class Credentials(BaseModel):
     username: str
     password: str
 
+from fastapi import Request
+import traceback
+
 @app.post("/peloton/summary")
-async def peloton_summary(creds: Credentials):
-    if not creds.username or not creds.password:
-        raise HTTPException(status_code=400, detail="Missing credentials")
+async def peloton_summary(creds: Credentials, request: Request):
+    try:
+        if not creds.username or not creds.password:
+            raise HTTPException(status_code=400, detail="Missing credentials")
 
-    cookies = await peloton_login(creds.username, creds.password)
+        cookies = await peloton_login(creds.username, creds.password)
 
-    # Get user ID and profile
-    async with httpx.AsyncClient(cookies=cookies) as client:
-        me_res = await client.get(f"{PELOTON_BASE}/api/me")
-        if me_res.status_code != 200:
-            raise HTTPException(status_code=500, detail="Failed to get /me")
-        user_id = me_res.json()["id"]
+        async with httpx.AsyncClient(cookies=cookies) as client:
+            me_res = await client.get(f"{PELOTON_BASE}/api/me")
+            if me_res.status_code != 200:
+                raise HTTPException(status_code=500, detail="Failed to get /me")
+            user_id = me_res.json()["id"]
 
-        profile_res = await client.get(f"{PELOTON_BASE}/api/user/{user_id}")
-        if profile_res.status_code != 200:
-            raise HTTPException(status_code=500, detail="Failed to get user profile")
+            profile_res = await client.get(f"{PELOTON_BASE}/api/user/{user_id}")
+            if profile_res.status_code != 200:
+                raise HTTPException(status_code=500, detail="Failed to get user profile")
 
-        total_workouts = profile_res.json().get("total_workouts")
-        if total_workouts is None:
-            raise HTTPException(status_code=500, detail="Could not find total_workouts")
+            total_workouts = profile_res.json().get("total_workouts")
+            if total_workouts is None:
+                raise HTTPException(status_code=500, detail="Could not find total_workouts")
 
-    # Calculate streaks
-    workouts = await fetch_workouts_for_streak(cookies, user_id)
-    weekly_streak = calculate_weekly_streak(workouts)
-    streak_bar = generate_streak_bar(weekly_streak)
-    # streak = calculate_streak(workouts)
-    last_workout = max(workouts, key=lambda w: w["start_time"])
-    last_date = datetime.utcfromtimestamp(last_workout["start_time"]).strftime("%Y-%m-%d")
+        workouts = await fetch_workouts_for_streak(cookies, user_id)
+        weekly_streak = calculate_weekly_streak(workouts)
+        streak_bar = generate_streak_bar(weekly_streak)
 
-    return {
-        "total_activities": total_workouts,
-        "weekly_streak": weekly_streak,
-        "last_workout_date": last_date,
-        "streak_bar": streak_bar
-    }
+        last_workout = max(workouts, key=lambda w: w["start_time"])
+        last_date = datetime.utcfromtimestamp(last_workout["start_time"]).strftime("%Y-%m-%d")
+
+        return {
+            "total_activities": total_workouts,
+            "weekly_streak": weekly_streak,
+            "last_workout_date": last_date,
+            "streak_bar": streak_bar
+        }
+
+    except Exception as e:
+        print("==== Exception in /peloton/summary ====")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 @app.get("/plugin.json")
 def get_plugin_json():
