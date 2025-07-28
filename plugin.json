@@ -1,0 +1,22 @@
+{
+  "id": "peloton-streaks",
+  "name": "Peloton Streaks",
+  "description": "Displays your current weekly Peloton workout streak, total activities, and latest workout.",
+  "data_url": "https://your-api-host.com/peloton/summary?username={{ peloton_username }}&password={{ peloton_password }}",
+  "refresh_interval": 300,
+  "markup": "<div class='layout layout--col'><div class='flex flex--col gap--space-between w-full h-full'><div class='item'><div class='meta'></div><div class='content'><span class='value'>{{ total_activities }} activities</span><span class='label'>All time</span></div></div><div class='w-full b-h-gray-3'></div><div class='item'><div class='meta'></div><div class='content'><span class='value'>{{ weekly_streak }} weeks</span><span class='label'>Streak</span></div></div><div class='item'><div class='meta'></div><div class='content content--center'><span class='value'>{{ streak_bar }}</span><span class='label'>Weekly Streak Bar</span></div></div><div class='w-full b-h-gray-3'></div><div class='item'><div class='meta'></div><div class='content'><span class='value'>{{ last_workout_date }}</span><span class='label'>Last Workout Date</span></div></div><div class='title_bar'><img class='image' src='https://images.seeklogo.com/logo-png/40/1/peloton-logo-png_seeklogo-406289.png' /><span class='title'>Peloton Goals</span></div></div></div>",
+  "fields": [
+    {
+      "id": "peloton_username",
+      "name": "Peloton Username",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "peloton_password",
+      "name": "Peloton Password",
+      "type": "password",
+      "required": true
+    }
+  ]
+}
