@@ -15,8 +15,17 @@ PELOTON_BASE = "https://api.onepeloton.com"
 # -------------------------------------
 async def peloton_login(username: str, password: str) -> httpx.Cookies:
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"  # 👈 fake it
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/115.0.0.0 Safari/537.36"
+        ),
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Origin": "https://www.onepeloton.com",
+        "Referer": "https://www.onepeloton.com/",
     }
+
     async with httpx.AsyncClient(headers=headers) as client:
         res = await client.post(
             f"{PELOTON_BASE}/auth/login",
