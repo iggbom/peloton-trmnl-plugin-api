@@ -14,14 +14,23 @@ PELOTON_BASE = "https://api.onepeloton.com"
 # 🔐 Login to Peloton API
 # -------------------------------------
 async def peloton_login(username: str, password: str) -> httpx.Cookies:
-    async with httpx.AsyncClient() as client:
-        res = await client.post(f"{PELOTON_BASE}/auth/login", json={
-            "username_or_email": username,
-            "password": password
-        })
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"  # 👈 fake it
+    }
+    async with httpx.AsyncClient(headers=headers) as client:
+        res = await client.post(
+            f"{PELOTON_BASE}/auth/login",
+            json={
+                "username_or_email": username,
+                "password": password
+            }
+        )
+        print("Login status code:", res.status_code)
+        print("Login response body:", res.text)
         if res.status_code != 200:
             raise HTTPException(status_code=500, detail="Peloton login failed")
         return client.cookies
+
 
 # -------------------------------------
 # 📆 Streak calculation
